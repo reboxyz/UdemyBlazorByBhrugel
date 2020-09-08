@@ -1,0 +1,23 @@
+@page "/ParentComponent"
+
+<h1 class="text-danger">Parent-Child Component</h1>
+
+<BlazingShop.Pages.Components.ChildComponent
+    Title="This Title is set from Parent"
+    OnClickHandler="@ShowMessage"
+ >
+    This Content is set between the <b>tag</b> of the ChildComponent from the Parent Component.
+ </BlazingShop.Pages.Components.ChildComponent>
+ <br/>
+ <p><b>@MessageText</b></p>
+
+@code {
+    private string MessageText = "";
+
+    // Event Callback to be called from Child Component
+    private void ShowMessage(MouseEventArgs e)
+    {
+        //Console.WriteLine("Event: {0}, {1} ", e.ScreenX, e.ScreenY);
+        MessageText = "Blazing text from Parent";
+    }
+}

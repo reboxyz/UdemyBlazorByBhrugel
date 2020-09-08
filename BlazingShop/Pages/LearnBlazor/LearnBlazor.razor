@@ -1,0 +1,21 @@
+@inherits LearnBlazorBase
+@page "/learnblazor"
+
+<h3 class="text-info pb-3">@WelcomeText</h3>
+
+<p> On Change &nbsp; <input @bind="name" /></p>
+<p> On Spontaneous &nbsp; <input @bind="name" @bind:event="oninput" /></p>
+<p> I am @(name.Length != 0 ? name : "_____")</p>
+<p><button @onclick="getName">Surprise Me!</button></p>
+
+@code {
+    /*  Note! Moved to LearnBlazor.razor.cs
+    string WelcomeText = "Time to learn Blazor!";
+    string name = "Spark";
+
+    void getName()
+    {
+        name = "Blazor Learner";
+    }
+    */
+}

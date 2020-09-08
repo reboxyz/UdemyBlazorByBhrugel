@@ -1,0 +1,52 @@
+@page "/details/{ProductId:int}"
+@using BlazingShop.Data
+@using BlazingShop.Services
+
+@inject ProductService ProductService
+
+<br/>
+<h2 class="text-info">@(ShowAppointment ? "Book Appointment" : "Product Details")</h2>
+
+@if(ShowAppointment)
+{
+    <BlazingShop.Pages.Components.AppointmentComponent 
+        appointment="appointment" 
+        onClickShowDetails="onClickShowDetails"
+    ></BlazingShop.Pages.Components.AppointmentComponent>
+} else 
+{
+    <BlazingShop.Pages.Components.DetailsComponent 
+        appointment="appointment" 
+        onClickShowAppointment="onClickShowAppointment"
+    >
+    </BlazingShop.Pages.Components.DetailsComponent>
+}
+
+
+@code {
+    [Parameter]
+    public int ProductId { get; set; }
+    public Appointment appointment { get; set; }
+    // Note! Toggle flag; False on Details Page and True on Appointment Page
+    bool ShowAppointment = false;
+
+    protected override void OnInitialized()
+    {
+        appointment = new Appointment()
+        {
+            AppointmentDate = DateTime.Now
+        };
+        appointment.Product = ProductService.GetProduct(ProductId);
+    }
+
+    void onClickShowAppointment()
+    {
+        ShowAppointment = true;
+    }
+
+    void onClickShowDetails()
+    {
+        ShowAppointment = false;
+    }
+
+}    

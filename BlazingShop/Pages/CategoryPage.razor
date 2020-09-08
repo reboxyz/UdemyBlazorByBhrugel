@@ -1,0 +1,171 @@
+@page "/category"
+
+@using BlazingShop.Data
+@using BlazingShop.Services
+
+@inject AuthenticationStateProvider AuthenticationStateProvider // Use  this one to manipulate AuthenticationState inside the HTML pages
+
+
+@* @inherits OwningComponentBase<CategoryService> // Note! Only one 'Service' limitation *@        
+
+
+@inject CategoryService CategoryService;                    // Use DI to inject Service which as no limitation to the number of Services
+@* @inject WeatherForecastService WeatherForecastService; *@
+
+<AuthorizeView>
+    <Authorized Context="Auth">
+        @if(categories == null /*|| categories.Count == 0*/)
+        {
+            <p><em>Loading or No categories exist</em></p>
+        } else 
+        {
+            <div class="container border p-3">
+                <div class="row">
+                    <div class="col-5">
+                        <h3 class="text-info">Category List</h3>
+                    </div>
+                    <div class="col-3">
+                        <button class="btn btn-info form-control" @onclick="AddNewCategory"> 
+                            Add New Category
+                        </button>
+
+                    </div>
+                </div>
+                <div class="row pt-4">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var category in categories)
+                            {
+                                <tr>
+                                    <td key="@category.Id">@category.Name</td>
+                                    <td>
+                                        <button class="btn btn-primary" style="width: 150px" @onclick="(() => EditCategory(category))">
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            }   
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>You're not signed in.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@if (ShowPopup)
+{
+<div class="modal" tabindex="-1" style="display:block" role="dialog">
+    <EditForm Model="@objCategory"  OnValidSubmit="@ValidSubmit">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="text-info">@(objCategory.Id !=0 ? "Update" : "Create") Category</h3>
+                    <button type="button" class="close" @onclick="ClosePopup">
+                        <span aria-hidden="true">X</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+                    <div class="col-9">
+                        <div class="row py-2">
+                            <div class="col-4">
+                                Category Name
+                            </div>
+                            <div class="col-8">
+                                <input class="form-control" type="text" @bind="objCategory.Name" />
+                            </div>
+                        </div>
+                        <div class="row py-2">
+                            <div class="offset-4 col">
+                                <button class="btn btn-primary form-control" type="submit">Submit</button>
+                            </div>
+                            @if (objCategory.Id > 0)
+                            {
+                                <div class="col">
+                                    <button class="btn btn-danger form-control"
+                                            @onclick="DeleteCategory"
+                                            type="submit">Delete</button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</div>
+}
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationState { get; set; }
+
+    List<Category> categories;
+    Category objCategory = new Category();     // Current Catetory 
+    bool ShowPopup = false;
+
+    // Life-cycle Method
+    protected override async void OnInitialized()
+    {
+        // Retrieve Current Logged-in User
+        var user = (await authenticationState).User.Identity.Name;
+        Console.WriteLine("User Email: {0}", user);
+        
+
+        //categories = Service.GetCategories();
+        categories = CategoryService.GetCategories();
+    } 
+
+    private void AddNewCategory()   
+    {
+        // Create a new Category
+        objCategory = new Category(); 
+        objCategory.Id = 0;  
+        ShowPopup = true;
+    }
+
+    private void EditCategory(Category category)   
+    {
+        objCategory = category;  // Load Category to be displayed
+        ShowPopup = true;
+    }
+
+    private void ClosePopup()
+    {
+        ShowPopup = false;
+    }
+
+    private void DeleteCategory()
+    {
+        ShowPopup = false;
+        var result = CategoryService.DeleteCategory(objCategory);
+        categories = CategoryService.GetCategories(); // Reload categories
+    }
+
+    private void ValidSubmit()
+    {
+        var result = false;
+        ShowPopup = false;
+
+        if (objCategory.Id > 0) 
+        {
+            result = CategoryService.UpdateCategory(objCategory); 
+        } else 
+        {
+            result = CategoryService.CreateCategory(objCategory); 
+        }
+
+        categories = CategoryService.GetCategories(); // Reload categories
+    }
+}    

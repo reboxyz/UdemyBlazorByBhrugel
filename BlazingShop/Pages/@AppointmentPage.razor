@@ -1,0 +1,194 @@
+@page "/appointments"
+
+@using BlazingShop.Data
+@using BlazingShop.Services
+
+@inject AppointmentService AppointmentService
+
+<AuthorizeView>
+    <Authorized Context="Auth">
+         @if(appointments == null /*|| appointments.Count == 0*/)
+        {
+            <p><em>Loading or No Appointments exist</em></p>
+        } else 
+        {
+            <div class="container border p-3">
+                <div class="row">
+                    <div class="col-8">
+                        <h3 class="text-info">Appointment List</h3>
+                    </div>
+                </div>
+                <div class="row pt-4">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Date</th>
+                                <th>Confirmed</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var appointment in appointments)
+                            {
+                                <tr>
+                                    <td>@appointment.CustomerName</td>
+                                    <td>@appointment.CustomerEmail</td>
+                                    <td>@appointment.CustomerPhone</td>
+                                    <td>@appointment.AppointmentDate.ToString("MM/dd/yyyy")</td>
+                                    <td><input type="checkbox" checked="@(appointment.IsConfirmed)" class="form-control" disabled /></td>
+                                    <td>
+                                        <button class="btn btn-primary" style="width: 150px" @onclick="(() => EditAppointment(appointment))">
+                                            Edit
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p>You're not signed in.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+@if (ShowPopup)
+{
+    <div class="modal" tabindex="-1" style="display:block" role="dialog">
+        <EditForm Model="@objAppointment"  OnValidSubmit="@ValidSubmit">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="text-info">Edit Appointment</h3>
+                        <button type="button" class="close" @onclick="ClosePopup">
+                            <span aria-hidden="true">X</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="row">
+                            <div class="col-9">
+                                <div class="row py-2">
+                                    <div class="col-4">
+                                        Name
+                                    </div>
+                                    <div class="col-8">
+                                        @*<text class="form-control" type="text" @bind="objAppointment.CustomerName" /> Note! Similar code below  *@
+                                        <InputText class="form-control" @bind-Value="objAppointment.CustomerName" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-9">
+                                <div class="row py-2">
+                                    <div class="col-4">
+                                        Email
+                                    </div>
+                                    <div class="col-8">
+                                        @*<text class="form-control" type="text" @bind="objAppointment.CustomerEmail" /> Note! Similar code below  *@
+                                        <InputText class="form-control" @bind-Value="objAppointment.CustomerEmail" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-9">
+                                <div class="row py-2">
+                                    <div class="col-4">
+                                        Phone
+                                    </div>
+                                    <div class="col-8">
+                                        @*<text class="form-control" type="text" @bind="objAppointment.CustomerPhone" /> Note! Similar code below  *@
+                                        <InputText class="form-control" @bind-Value="objAppointment.CustomerPhone" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-9">
+                                <div class="row py-2">
+                                    <div class="col-4">
+                                        Product
+                                    </div>
+                                    <div class="col-8">
+                                        @*<text class="form-control" type="text" @bind="objAppointment.Product.Name" /> Note! Similar code below  *@
+                                        <InputText class="form-control" @bind-Value="objAppointment.Product.Name" readonly />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-9">
+                                <div class="row py-2">
+                                    <div class="col-4">
+                                        Date
+                                    </div>
+                                    <div class="col-8">
+                                        @*<text class="form-control" type="text" @bind="objAppointment.AppointmentDate" type="date" /> Note! Similar code below  *@
+                                        <InputDate class="form-control" @bind-Value="objAppointment.AppointmentDate"  />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-9">
+                                <div class="row py-2">
+                                    <div class="offset-4 col">
+                                        <button class="btn btn-primary form-control" type="submit">Submit</button>
+                                    </div>
+                                    <div class="col">
+                                        <button class="btn btn-danger form-control"
+                                                @onclick="DeleteAppointment"
+                                                type="submit">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </EditForm>
+    </div>    
+}
+
+@code {
+    List<Appointment> appointments;
+    Appointment objAppointment = new Appointment();  // Current Appointment
+    bool ShowPopup = false;
+
+    protected override void OnInitialized()
+    {
+        appointments = AppointmentService.GetAppointments();
+    }
+    
+    private void ClosePopup()
+    {
+        ShowPopup = false;
+    }
+
+    private void EditAppointment(Appointment appointment)
+    {
+        objAppointment = appointment;
+        ShowPopup = true;
+    }
+
+    private void ValidSubmit()
+    {
+        ShowPopup = false;
+        AppointmentService.ConfirmAppointment(objAppointment);
+        // Reload
+        appointments = AppointmentService.GetAppointments();
+    }
+
+    private void DeleteAppointment()
+    {
+        ShowPopup = false;
+        var result = AppointmentService.DeleteAppointment(objAppointment.Id);
+        // Reload
+        appointments = AppointmentService.GetAppointments();
+    }
+}   
